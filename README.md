@@ -1,10 +1,19 @@
-# SG Weatherforecast Bot
+# SG Weatherforecast Bot — @sg_weatherforecast_bot
 
-Telegram bot: **@sg_weatherforecast_bot**
+Telegram bot: **[@sg_weatherforecast_bot](https://t.me/sg_weatherforecast_bot)**
 
 Sends Singapore rain-probability updates, once a day automatically, plus
 on-demand rechecks. No token is stored in this repo — set `BOT_TOKEN` in the
-environment (see below).
+environment (see "Environment variables" below).
+
+## Bot handle
+
+- Handle: `@sg_weatherforecast_bot`
+- Open it in Telegram: https://t.me/sg_weatherforecast_bot
+- Start it with `/start` — that is how the daily 8am update learns which
+  chats to send to. There is no admin requirement to post.
+- Try it with `/recheck` (Jurong West), or `/recheck queenstown`,
+  `/recheck bedok`, `/recheck tampines` for another Singapore region.
 
 ## What it does
 
@@ -70,6 +79,46 @@ Track processed Telegram `update_id`s in `seen_updates.json`
 
 A `/recheck` is answered once, and only after answering is its
 `update_id` added. `/start` is never answered by the recheck watcher.
+
+## Environment variables
+
+Only one is required by the code in this repo:
+
+| Variable | Required | What it is / how to set it |
+| --- | --- | --- |
+| `BOT_TOKEN` | Yes | The Telegram bot token for `@sg_weatherforecast_bot`. Get it from [@BotFather](https://t.me/BotFather) (`/mybots` → your bot → API Token). Set it in the environment only — never put it in a file you commit. |
+
+No other variables are needed: chat IDs are discovered from `getUpdates`
+after a chat sends `/start`, and the default region (Jurong West, 644664)
+is in the spec above, not in an env var.
+
+Changes to make when you set this up somewhere new:
+
+1. **Get / reuse the token:** do not create a new bot unless you want a new
+   handle — this README is for `@sg_weatherforecast_bot`, so reuse its
+   existing token from BotFather.
+2. **Local run:**
+   ```sh
+   export BOT_TOKEN='<your bot token>'
+   python3 telegram.py getMe
+   ```
+   `getMe` should return `username: sg_weatherforecast_bot`. If it
+   returns 401, the token is wrong; if 404, the token is malformed.
+3. **Do not use a `.env` file in git:** `.env` and `seen_updates.json`
+   are in `.gitignore`. For a server, put the token in a service
+   environment file or secret store instead, for example a systemd
+   `EnvironmentFile=` or your host's secret manager — not in the repo.
+4. **GitHub Actions (if you add a workflow later):** add `BOT_TOKEN` as a
+   repository secret (Settings → Secrets and variables → Actions), and
+   reference it as `${{ secrets.BOT_TOKEN }}` in the workflow. Do not
+   paste it into a workflow file.
+5. **Schedule / timezone:** the daily job is 8am **Asia/Singapore**.
+   Whatever scheduler you use (cron, GitHub Actions, systemd timer), set
+   its timezone to `Asia/Singapore` — a UTC 8am job would run at 4pm
+   Singapore time.
+6. **Rotate if leaked:** if a token ever appears in git, a screenshot, or
+   a log, revoke it in BotFather (`/revoke`) and update the secret
+   everywhere it is set. The old token stops working immediately.
 
 ## Running it
 
